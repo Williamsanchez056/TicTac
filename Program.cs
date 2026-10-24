@@ -31,7 +31,7 @@ app.MapPost("/api/Movimientos", async (MovimientoRequest request, PartidaService
         return (IResult)Results.BadRequest(new { mensaje = resultado.Mensaje });
     }
 
-    await hub.Clients.Group(request.PartidaId).SendAsync("MovimientoActualizado", resultado.Partida);
+    await hub.Clients.Group(resultado.Partida!.Id).SendAsync("MovimientoActualizado", resultado.Partida);
     return Results.Ok(resultado.Partida);
 });
 
@@ -43,7 +43,7 @@ app.MapPost("/api/Partidas/{partidaId}/entrar", async (string partidaId, Jugador
         return (IResult)Results.BadRequest(new { mensaje = resultado.Mensaje });
     }
 
-    await hub.Clients.Group(partidaId).SendAsync("EstadoPartida", resultado.Partida);
+    await hub.Clients.Group(resultado.Partida!.Id).SendAsync("EstadoPartida", resultado.Partida);
     return Results.Ok(resultado.Partida);
 });
 
