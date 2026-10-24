@@ -22,13 +22,19 @@ public sealed class PartidaService
         var partida = _partidas.GetOrAdd(partidaId.Trim(), id => new Partida { Id = id });
         lock (_candado)
         {
-            if (partida.Estado == "Finalizada")
-                return (false, "La partida ya termino. Crea otra partida.", Copiar(partida));
+            if (partida.Estado == "Finalizada" || partida.Estado == "Empate")
+                return (false, "La partida ya termino. Usa otro codigo para jugar de nuevo.", Copiar(partida));
 
-            if (jugador == "X" && partida.Estado == "Esperando jugadores")
-                partida.Estado = "En curso";
+            if (!partida.Jugadores.Contains(jugador))
+            {
+                if (partida.Jugadores.Count >= 2)
+                    return (false, "La partida ya tiene dos jugadores.", Copiar(partida));
 
-            partida.JugadoresConectados = Math.Min(2, partida.JugadoresConectados + 1);
+                partida.Jugadores.Add(jugador);
+            }
+
+            partida.JugadoresConectados = partida.Jugadores.Count;
+            partida.Estado = partida.Jugadores.Count == 2 ? "En curso" : "Esperando jugadores";
             return (true, "Te uniste a la partida.", Copiar(partida));
         }
     }
@@ -100,6 +106,7 @@ public sealed class PartidaService
         JugadorActual = partida.JugadorActual,
         Estado = partida.Estado,
         Ganador = partida.Ganador,
+        Jugadores = [.. partida.Jugadores],
         JugadoresConectados = partida.JugadoresConectados
     };
 }
