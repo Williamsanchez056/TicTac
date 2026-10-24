@@ -55,6 +55,9 @@ public sealed class PartidaService
 
         lock (_candado)
         {
+            if (!partida.Jugadores.Contains(jugador))
+                return (false, "Ese jugador no esta registrado en la partida.", Copiar(partida));
+
             if (partida.Estado != "En curso")
                 return (false, "La partida no esta lista para jugar.", Copiar(partida));
 
