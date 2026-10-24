@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using TicTac.Hubs;
 using TicTac.Models;
 using TicTac.Services;
