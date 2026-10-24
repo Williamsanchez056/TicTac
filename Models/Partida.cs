@@ -8,6 +8,7 @@ public sealed class Partida
     public string JugadorActual { get; set; } = "X";
     public string Estado { get; set; } = "Esperando jugadores";
     public string? Ganador { get; set; }
+    public List<string> Jugadores { get; set; } = [];
     public int JugadoresConectados { get; set; }
 }
 
