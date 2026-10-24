@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TicTacToe en linea</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+</head>
+<body>
+  <main class="contenedor">
+    <header>
+      <p class="etiqueta">JUEGO EN TIEMPO REAL</p>
+      <h1>TicTacToe</h1>
+      <p class="subtitulo">Dos jugadores. Un tablero. Gana quien consiga tres.</p>
+    </header>
+
+    <section class="panel acceso">
+      <label for="partidaId">Codigo de partida</label>
+      <div class="fila">
+        <input id="partidaId" maxlength="30" value="partida-1" autocomplete="off">
+        <select id="jugador">
+          <option value="X">Jugador X</option>
+          <option value="O">Jugador O</option>
+        </select>
+        <button id="entrar">Entrar</button>
+      </div>
+      <p id="conexion" class="estado">Desconectado</p>
+    </section>
+
+    <section class="panel juego">
+      <div class="barra">
+        <div><span class="etiqueta">ESTADO</span><strong id="estado">Entra a una partida</strong></div>
+        <div><span class="etiqueta">TURNO</span><strong id="turno">—</strong></div>
+      </div>
+      <div id="tablero" class="tablero" aria-label="Tablero de tres en raya">
+        <button class="casilla" data-pos="0" aria-label="Fila 1 columna 1"></button>
+        <button class="casilla" data-pos="1" aria-label="Fila 1 columna 2"></button>
+        <button class="casilla" data-pos="2" aria-label="Fila 1 columna 3"></button>
+        <button class="casilla" data-pos="3" aria-label="Fila 2 columna 1"></button>
+        <button class="casilla" data-pos="4" aria-label="Fila 2 columna 2"></button>
+        <button class="casilla" data-pos="5" aria-label="Fila 2 columna 3"></button>
+        <button class="casilla" data-pos="6" aria-label="Fila 3 columna 1"></button>
+        <button class="casilla" data-pos="7" aria-label="Fila 3 columna 2"></button>
+        <button class="casilla" data-pos="8" aria-label="Fila 3 columna 3"></button>
+      </div>
+      <button id="reiniciar" class="secundario">Limpiar pantalla</button>
+      <p id="mensaje" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Movimientos</h2>
+      <ol id="movimientos" class="movimientos"><li>Aun no hay movimientos.</li></ol>
+    </section>
+    <p class="nota">Abre esta pagina en dos computadoras, usa el mismo codigo y selecciona X en una y O en la otra.</p>
+  </main>
+  <script src="/js/partida.js"></script>
+</body>
+</html>
