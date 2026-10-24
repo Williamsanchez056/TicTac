@@ -17,6 +17,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Restaurar dependencias
-        run: dotnet restore TicTac.csproj
+        run: dotnet restore TicTac.sln
       - name: Compilar
-        run: dotnet build TicTac.csproj --no-restore --configuration Release
+        run: dotnet build TicTac.sln --no-restore --configuration Release

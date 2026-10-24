@@ -1,0 +1,76 @@
+:root {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #222;
+    background: #f4f4f4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 24px 12px;
+    background: #f4f4f4;
+}
+
+.contenedor { max-width: 600px; margin: 0 auto; }
+header { text-align: center; margin: 10px 0 24px; }
+.etiqueta { display: block; font-size: 12px; margin-bottom: 8px; color: #555; }
+h1 { font-size: 36px; margin: 0; }
+h2 { font-size: 20px; margin: 0 0 16px; }
+.subtitulo { color: #555; margin: 8px 0; }
+
+.panel {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 18px;
+    margin: 14px 0;
+}
+
+.acceso label { display: block; font-size: 14px; margin-bottom: 8px; }
+.fila { display: flex; gap: 8px; }
+input, select, button { font: inherit; border: 1px solid #bbb; border-radius: 4px; padding: 10px; }
+input, select { background: #fff; color: #222; min-width: 0; }
+input { flex: 1; width: 100px; }
+button { cursor: pointer; background: #e6e6e6; color: #222; font-weight: 600; }
+button:hover { background: #d8d8d8; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+.estado { color: #555; font-size: 14px; margin: 12px 0 0; }
+.barra { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+.barra strong { display: block; margin-top: 4px; }
+
+.tablero {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    max-width: 360px;
+    margin: 0 auto 18px;
+}
+
+.casilla {
+    aspect-ratio: 1;
+    background: #fafafa;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    font-size: clamp(2.5rem, 12vw, 4rem);
+    font-weight: bold;
+    color: #222;
+    padding: 0;
+}
+
+.casilla[data-marca="X"] { color: #1558a6; }
+.casilla[data-marca="O"] { color: #b13b2e; }
+.secundario { display: block; margin: 0 auto; }
+#mensaje { text-align: center; min-height: 1.4em; color: #333; }
+.movimientos { margin: 0; padding-left: 24px; color: #444; }
+.movimientos li { padding: 4px 0; }
+.nota { text-align: center; color: #666; font-size: 13px; line-height: 1.5; margin: 20px 8px; }
+
+@media (max-width: 480px) {
+    body { padding: 16px 8px; }
+    .panel { padding: 14px; }
+    .fila { flex-wrap: wrap; }
+    .fila input { flex-basis: 100%; }
+    .fila select { flex: 1; }
+}

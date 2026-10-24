@@ -1,11 +1,12 @@
 using System.Collections.Concurrent;
-using TicTac.Models;
+using TicTac.Shared.Contracts;
 
-namespace TicTac.Services;
+namespace TicTac.HubServer.Services;
 
 public sealed class PartidaService
 {
-    private readonly ConcurrentDictionary<string, Partida> _partidas = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Partida> _partidas =
+        new(StringComparer.OrdinalIgnoreCase);
     private readonly object _candado = new();
 
     public Partida? Obtener(string partidaId) =>
@@ -20,9 +21,10 @@ public sealed class PartidaService
             return (false, "El jugador debe ser X u O.", null);
 
         var partida = _partidas.GetOrAdd(partidaId.Trim(), id => new Partida { Id = id });
+
         lock (_candado)
         {
-            if (partida.Estado == "Finalizada" || partida.Estado == "Empate")
+            if (partida.Estado is "Finalizada" or "Empate")
                 return (false, "La partida ya termino. Usa otro codigo para jugar de nuevo.", Copiar(partida));
 
             if (!partida.Jugadores.Contains(jugador))
@@ -35,11 +37,13 @@ public sealed class PartidaService
 
             partida.JugadoresConectados = partida.Jugadores.Count;
             partida.Estado = partida.Jugadores.Count == 2 ? "En curso" : "Esperando jugadores";
+
             return (true, "Te uniste a la partida.", Copiar(partida));
         }
     }
 
-    public (bool Exito, string Mensaje, Partida? Partida) Jugar(string partidaId, string jugador, int fila, int columna)
+    public (bool Exito, string Mensaje, Partida? Partida) Jugar(
+        string partidaId, string jugador, int fila, int columna)
     {
         if (string.IsNullOrWhiteSpace(partidaId))
             return (false, "El codigo de partida es obligatorio.", null);
@@ -69,7 +73,12 @@ public sealed class PartidaService
                 return (false, "Esa casilla ya esta ocupada.", Copiar(partida));
 
             partida.Tablero[indice] = jugador;
-            partida.Movimientos.Add(new Movimiento(partida.Movimientos.Count + 1, jugador, fila, columna, DateTime.UtcNow));
+            partida.Movimientos.Add(new Movimiento(
+                partida.Movimientos.Count + 1,
+                jugador,
+                fila,
+                columna,
+                DateTime.UtcNow));
 
             if (HayGanador(partida.Tablero, jugador))
             {

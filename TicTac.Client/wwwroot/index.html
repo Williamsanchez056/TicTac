@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TicTacToe en linea</title>
   <link rel="stylesheet" href="/css/site.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 </head>
 <body>
   <main class="contenedor">
@@ -52,8 +51,9 @@
       <h2>Movimientos</h2>
       <ol id="movimientos" class="movimientos"><li>Aun no hay movimientos.</li></ol>
     </section>
-    <p class="nota">Abre esta pagina en dos computadoras, usa el mismo codigo y selecciona X en una y O en la otra.</p>
+    <p class="nota">Abre esta pagina en dos dispositivos conectados a la misma red, usa el mismo codigo y selecciona X en uno y O en el otro.</p>
   </main>
+  <script src="/js/signalr/dist/browser/signalr.min.js"></script>
   <script src="/js/partida.js"></script>
 </body>
 </html>

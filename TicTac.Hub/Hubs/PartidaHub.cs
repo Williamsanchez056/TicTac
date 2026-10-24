@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
+using TicTac.HubServer.Services;
 
-using TicTac.Services;
-
-namespace TicTac.Hubs;
+namespace TicTac.HubServer.Hubs;
 
 public sealed class PartidaHub(PartidaService partidas) : Hub
 {
@@ -16,16 +15,6 @@ public sealed class PartidaHub(PartidaService partidas) : Hub
             throw new HubException("Primero debes entrar a la partida con ese jugador.");
 
         await Groups.AddToGroupAsync(Context.ConnectionId, partida.Id);
-        await Clients.Caller.SendAsync("ConectadoPartida", new
-        {
-            partidaId = partidaId.Trim(),
-            jugador,
-            conectado = true
-        });
-    }
-
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
-        await base.OnDisconnectedAsync(exception);
+        await Clients.Caller.SendAsync("EstadoPartida", partida);
     }
 }

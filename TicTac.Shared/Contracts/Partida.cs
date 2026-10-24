@@ -1,4 +1,4 @@
-namespace TicTac.Models;
+namespace TicTac.Shared.Contracts;
 
 public sealed class Partida
 {
@@ -12,8 +12,17 @@ public sealed class Partida
     public int JugadoresConectados { get; set; }
 }
 
-public sealed record Movimiento(int Numero, string Jugador, int Fila, int Columna, DateTime Fecha);
+public sealed record Movimiento(
+    int Numero,
+    string Jugador,
+    int Fila,
+    int Columna,
+    DateTime Fecha);
 
-public sealed record MovimientoRequest(string PartidaId, string Jugador, int Fila, int Columna);
+public sealed record MovimientoRequest(
+    string PartidaId,
+    string Jugador,
+    int Fila,
+    int Columna);
 
 public sealed record JugadorRequest(string Jugador);

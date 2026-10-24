@@ -8,12 +8,13 @@ const mensajeTexto = document.querySelector("#mensaje");
 const movimientosLista = document.querySelector("#movimientos");
 const casillas = [...document.querySelectorAll(".casilla")];
 
+const servidorBase = `${window.location.protocol}//${window.location.hostname}:7001`;
 let partidaActual = null;
 let conexionLista = false;
 let uniendo = false;
 
 const conexion = new signalR.HubConnectionBuilder()
-  .withUrl("/partidaHub")
+  .withUrl(`${servidorBase}/partidaHub`)
   .withAutomaticReconnect()
   .build();
 
@@ -23,6 +24,7 @@ function mostrarMensaje(texto) {
 
 function actualizarTablero(partida) {
   if (!partida) return;
+
   partidaActual = partida;
   estadoTexto.textContent = partida.estado;
   turnoTexto.textContent = partida.estado === "En curso" ? partida.jugadorActual : "—";
@@ -49,9 +51,25 @@ function actualizarTablero(partida) {
   }
 }
 
+async function obtenerRespuesta(respuesta) {
+  const datos = await respuesta.json();
+  if (!respuesta.ok) {
+    throw new Error(datos.mensaje || "La solicitud no se pudo completar.");
+  }
+  return datos;
+}
+
+async function iniciarConexion() {
+  if (conexion.state === signalR.HubConnectionState.Connected) return;
+  await conexion.start();
+  conexionLista = true;
+  conexionTexto.textContent = "Conectado al servidor";
+}
+
 async function unirsePartida() {
   const partidaId = partidaInput.value.trim();
   const jugador = jugadorInput.value;
+
   if (!partidaId) {
     mostrarMensaje("Escribe un codigo de partida.");
     return;
@@ -59,33 +77,34 @@ async function unirsePartida() {
 
   uniendo = true;
   entrarBtn.disabled = true;
-  try {
-    const respuesta = await fetch(`/api/Partidas/${encodeURIComponent(partidaId)}/entrar`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jugador })
-    });
-    const datos = await respuesta.json();
-    if (!respuesta.ok) throw new Error(datos.mensaje || "No se pudo entrar a la partida.");
 
-    if (conexion.state !== signalR.HubConnectionState.Connected) {
-      await conexion.start();
-      conexionLista = true;
-    }
+  try {
+    const respuesta = await fetch(
+      `${servidorBase}/api/Partidas/${encodeURIComponent(partidaId)}/entrar`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jugador })
+      }
+    );
+    const partida = await obtenerRespuesta(respuesta);
+
+    await iniciarConexion();
     await conexion.invoke("UnirsePartida", partidaId, jugador);
 
-    const historial = await fetch(`/api/Movimientos/${encodeURIComponent(partidaId)}`);
-    if (historial.ok) {
-      const movimientos = await historial.json();
-      datos.movimientos = movimientos;
-    }
+    const historial = await fetch(
+      `${servidorBase}/api/Movimientos/${encodeURIComponent(partidaId)}`
+    );
+    if (historial.ok) partida.movimientos = await historial.json();
+
     partidaInput.dataset.partida = partidaId;
     jugadorInput.dataset.jugador = jugador;
-    actualizarTablero(datos);
+    actualizarTablero(partida);
     conexionTexto.textContent = "Conectado";
     mostrarMensaje(`Estas jugando como ${jugador}.`);
   } catch (error) {
     mostrarMensaje(error.message || "No se pudo conectar. Intenta de nuevo.");
+    conexionTexto.textContent = "Sin conexion";
   } finally {
     uniendo = false;
     entrarBtn.disabled = false;
@@ -97,6 +116,7 @@ async function jugar(casilla) {
     mostrarMensaje("Entra a una partida primero.");
     return;
   }
+
   if (partidaActual.jugadorActual !== jugadorInput.value) {
     mostrarMensaje("Espera tu turno.");
     return;
@@ -111,18 +131,21 @@ async function jugar(casilla) {
   };
 
   casillas.forEach(boton => boton.disabled = true);
+
   try {
-    const respuesta = await fetch("/api/Movimientos", {
+    const respuesta = await fetch(`${servidorBase}/api/Movimientos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(solicitud)
     });
-    const datos = await respuesta.json();
-    if (!respuesta.ok) throw new Error(datos.mensaje || "Movimiento rechazado.");
-    actualizarTablero(datos);
-    mostrarMensaje(datos.estado === "Finalizada"
-      ? `Gano el jugador ${datos.ganador}.`
-      : datos.estado === "Empate" ? "La partida termino en empate." : "Movimiento registrado.");
+    const partida = await obtenerRespuesta(respuesta);
+    actualizarTablero(partida);
+
+    mostrarMensaje(partida.estado === "Finalizada"
+      ? `Gano el jugador ${partida.ganador}.`
+      : partida.estado === "Empate"
+        ? "La partida termino en empate."
+        : "Movimiento registrado.");
   } catch (error) {
     mostrarMensaje(error.message || "No se pudo registrar el movimiento.");
     if (partidaActual) actualizarTablero(partidaActual);
@@ -131,17 +154,19 @@ async function jugar(casilla) {
 
 entrarBtn.addEventListener("click", unirsePartida);
 casillas.forEach(casilla => casilla.addEventListener("click", () => jugar(casilla)));
+
 document.querySelector("#reiniciar").addEventListener("click", () => {
+  partidaInput.dataset.partida = "";
+  jugadorInput.dataset.jugador = "";
+  partidaActual = null;
   actualizarTablero({
-    id: "",
     tablero: Array(9).fill(""),
     movimientos: [],
     estado: "Entra a una partida",
     jugadorActual: "",
     ganador: null
   });
-  mostrarMensaje("La pantalla se limpio. Para iniciar otra partida usa otro codigo.");
-  partidaActual = null;
+  mostrarMensaje("Saliste de la partida. Para jugar de nuevo, usa otro codigo.");
 });
 
 conexion.on("MovimientoActualizado", partida => {
@@ -153,7 +178,9 @@ conexion.on("MovimientoActualizado", partida => {
 });
 
 conexion.on("EstadoPartida", partida => {
-  if (partida && partida.id === partidaInput.dataset.partida) actualizarTablero(partida);
+  if (partida && partida.id === partidaInput.dataset.partida) {
+    actualizarTablero(partida);
+  }
 });
 
 conexion.onreconnecting(() => {
@@ -167,10 +194,13 @@ conexion.onreconnected(async () => {
   conexionTexto.textContent = "Conectado";
   const partidaId = partidaInput.dataset.partida;
   const jugador = jugadorInput.dataset.jugador;
+
   if (partidaId && jugador) {
     try {
       await conexion.invoke("UnirsePartida", partidaId, jugador);
-      const respuesta = await fetch(`/api/Movimientos/${encodeURIComponent(partidaId)}`);
+      const respuesta = await fetch(
+        `${servidorBase}/api/Movimientos/${encodeURIComponent(partidaId)}`
+      );
       if (respuesta.ok && partidaActual) {
         const movimientos = await respuesta.json();
         actualizarTablero({ ...partidaActual, movimientos });
@@ -187,9 +217,7 @@ conexion.onclose(() => {
   casillas.forEach(casilla => casilla.disabled = true);
 });
 
-conexion.start().then(() => {
-  conexionLista = true;
-  conexionTexto.textContent = "Conectado al servidor";
-}).catch(() => {
+iniciarConexion().catch(() => {
+  conexionLista = false;
   conexionTexto.textContent = "Sin conexion. Pulsa Entrar para reintentar.";
 });
