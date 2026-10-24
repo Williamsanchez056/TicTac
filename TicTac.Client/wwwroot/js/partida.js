@@ -11,7 +11,7 @@ const casillas = [...document.querySelectorAll(".casilla")];
 const servidorBase = `${window.location.protocol}//${window.location.hostname}:7001`;
 let partidaActual = null;
 let conexionLista = false;
-let uniendo = false;
+let inicioConexion = null;
 
 const conexion = new signalR.HubConnectionBuilder()
   .withUrl(`${servidorBase}/partidaHub`)
@@ -52,18 +52,44 @@ function actualizarTablero(partida) {
 }
 
 async function obtenerRespuesta(respuesta) {
-  const datos = await respuesta.json();
+  const texto = await respuesta.text();
+  let datos = {};
+  try {
+    datos = texto ? JSON.parse(texto) : {};
+  } catch {
+    throw new Error(`El servidor respondio con HTTP ${respuesta.status}. Comprueba que el Hub este ejecutandose en el puerto 7001.`);
+  }
+
   if (!respuesta.ok) {
-    throw new Error(datos.mensaje || "La solicitud no se pudo completar.");
+    throw new Error(datos.mensaje || `Error HTTP ${respuesta.status} al comunicarse con el servidor.`);
   }
   return datos;
 }
 
 async function iniciarConexion() {
-  if (conexion.state === signalR.HubConnectionState.Connected) return;
-  await conexion.start();
-  conexionLista = true;
-  conexionTexto.textContent = "Conectado al servidor";
+  if (conexion.state === signalR.HubConnectionState.Connected) {
+    conexionLista = true;
+    return;
+  }
+
+  if (inicioConexion) return inicioConexion;
+
+  inicioConexion = (async () => {
+    if (conexion.state === signalR.HubConnectionState.Disconnected) {
+      await conexion.start();
+    } else if (conexion.state !== signalR.HubConnectionState.Connected) {
+      throw new Error("La conexion esta iniciandose. Espera unos segundos y vuelve a pulsar Entrar.");
+    }
+
+    conexionLista = true;
+    conexionTexto.textContent = "Conectado al servidor";
+  })();
+
+  try {
+    await inicioConexion;
+  } finally {
+    inicioConexion = null;
+  }
 }
 
 async function unirsePartida() {
@@ -75,10 +101,15 @@ async function unirsePartida() {
     return;
   }
 
-  uniendo = true;
+  if (entrarBtn.disabled) return;
   entrarBtn.disabled = true;
+  conexionTexto.textContent = "Conectando...";
+  mostrarMensaje("Intentando entrar a la partida...");
 
   try {
+    // Inicia SignalR una sola vez para evitar dos llamadas simultaneas a start().
+    await iniciarConexion();
+
     const respuesta = await fetch(
       `${servidorBase}/api/Partidas/${encodeURIComponent(partidaId)}/entrar`,
       {
@@ -89,7 +120,6 @@ async function unirsePartida() {
     );
     const partida = await obtenerRespuesta(respuesta);
 
-    await iniciarConexion();
     await conexion.invoke("UnirsePartida", partidaId, jugador);
 
     const historial = await fetch(
@@ -101,12 +131,14 @@ async function unirsePartida() {
     jugadorInput.dataset.jugador = jugador;
     actualizarTablero(partida);
     conexionTexto.textContent = "Conectado";
-    mostrarMensaje(`Estas jugando como ${jugador}.`);
+    mostrarMensaje(partida.estado === "En curso"
+      ? `Entraste como ${jugador}. La partida esta lista.`
+      : `Entraste como ${jugador}. Esperando al otro jugador.`);
   } catch (error) {
-    mostrarMensaje(error.message || "No se pudo conectar. Intenta de nuevo.");
-    conexionTexto.textContent = "Sin conexion";
+    conexionLista = conexion.state === signalR.HubConnectionState.Connected;
+    conexionTexto.textContent = "No se pudo conectar";
+    mostrarMensaje(error.message || "No se pudo entrar. Comprueba que el Hub este ejecutandose en el puerto 7001.");
   } finally {
-    uniendo = false;
     entrarBtn.disabled = false;
   }
 }
@@ -217,7 +249,8 @@ conexion.onclose(() => {
   casillas.forEach(casilla => casilla.disabled = true);
 });
 
-iniciarConexion().catch(() => {
+iniciarConexion().catch(error => {
   conexionLista = false;
   conexionTexto.textContent = "Sin conexion. Pulsa Entrar para reintentar.";
+  mostrarMensaje(error.message || "No se pudo conectar con el Hub en el puerto 7001.");
 });
