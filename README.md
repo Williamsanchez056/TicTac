@@ -17,7 +17,7 @@ Juego de tres en raya para dos jugadores conectados desde computadoras diferente
 - Intentar reconectar automaticamente y volver a unirse a la partida.
 
 ## Ejecucion
-Abre la solucion en Visual Studio con .NET 10, restaura los paquetes y ejecuta el proyecto web. Consulta los puertos configurados en `Properties/launchSettings.json`; la URL del Hub y la URL usada por el cliente deben coincidir con la configuracion local.
+Abre `TicTac.csproj` en Visual Studio con .NET 10, restaura los paquetes y ejecuta el proyecto web. Consulta los puertos configurados en `Properties/launchSettings.json`; la URL del Hub y la URL usada por el cliente deben coincidir con la configuracion local.
 
 ## Nota
 La partida se mantiene en memoria durante la ejecucion del servidor. Reiniciar la aplicacion borra las partidas activas.
