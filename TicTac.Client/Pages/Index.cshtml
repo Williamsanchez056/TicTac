@@ -27,9 +27,9 @@
           <option value="X">Jugador X</option>
           <option value="O">Jugador O</option>
         </select>
-        <button id="entrar">Entrar</button>
+        <button id="entrar" type="button">Entrar</button>
       </div>
-      <p id="conexion" class="estado">Desconectado</p>
+      <p id="conexion" class="estado">Cargando cliente SignalR...</p>
     </section>
 
     <section class="panel juego">
@@ -48,7 +48,7 @@
         <button class="casilla" data-pos="7" aria-label="Fila 3 columna 2"></button>
         <button class="casilla" data-pos="8" aria-label="Fila 3 columna 3"></button>
       </div>
-      <button id="reiniciar" class="secundario">Salir de la partida</button>
+      <button id="reiniciar" class="secundario" type="button">Salir de la partida</button>
       <p id="mensaje" role="status" aria-live="polite"></p>
     </section>
 
@@ -58,7 +58,35 @@
     </section>
     <p class="nota">Abre esta pagina en dos dispositivos conectados a la misma red, usa el mismo codigo y selecciona X en uno y O en el otro.</p>
   </main>
-  <script src="/js/signalr/dist/browser/signalr.min.js"></script>
-  <script src="/js/partida.js"></script>
+  <script>
+    (() => {
+      const cargarJuego = () => {
+        const juego = document.createElement("script");
+        juego.src = "/js/partida.js";
+        juego.onerror = () => {
+          document.querySelector("#conexion").textContent =
+            "No se pudo cargar partida.js. Reinicia el cliente y actualiza la pagina.";
+        };
+        document.body.appendChild(juego);
+      };
+
+      const clienteLocal = document.createElement("script");
+      clienteLocal.src = "/js/signalr/dist/browser/signalr.min.js";
+      clienteLocal.onload = cargarJuego;
+      clienteLocal.onerror = () => {
+        const clienteCDN = document.createElement("script");
+        clienteCDN.src = "https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js";
+        clienteCDN.onload = cargarJuego;
+        clienteCDN.onerror = () => {
+          document.querySelector("#conexion").textContent =
+            "No se pudo cargar SignalR. Ejecuta libman restore en la carpeta TicTac.Client y recarga la pagina.";
+          document.querySelector("#mensaje").textContent =
+            "Falta la libreria SignalR local y tampoco se pudo descargar desde internet.";
+        };
+        document.body.appendChild(clienteCDN);
+      };
+      document.body.appendChild(clienteLocal);
+    })();
+  </script>
 </body>
 </html>
