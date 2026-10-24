@@ -16,9 +16,10 @@ app.UseStaticFiles();
 app.MapGet("/api/Movimientos/{partidaId}", (string partidaId, PartidaService partidas) =>
 {
     var partida = partidas.Obtener(partidaId);
-    return partida is null
-        ? Results.NotFound(new { mensaje = "No existe esa partida." })
-        : Results.Ok(partida.Movimientos);
+    if (partida is null)
+        return (IResult)Results.NotFound(new { mensaje = "No existe esa partida." });
+
+    return Results.Ok(partida.Movimientos);
 });
 
 app.MapPost("/api/Movimientos", async (MovimientoRequest request, PartidaService partidas, IHubContext<PartidaHub> hub) =>
@@ -27,7 +28,7 @@ app.MapPost("/api/Movimientos", async (MovimientoRequest request, PartidaService
 
     if (!resultado.Exito)
     {
-        return Results.BadRequest(new { mensaje = resultado.Mensaje });
+        return (IResult)Results.BadRequest(new { mensaje = resultado.Mensaje });
     }
 
     await hub.Clients.Group(request.PartidaId).SendAsync("MovimientoActualizado", resultado.Partida);
@@ -39,7 +40,7 @@ app.MapPost("/api/Partidas/{partidaId}/entrar", async (string partidaId, Jugador
     var resultado = partidas.Entrar(partidaId, request.Jugador);
     if (!resultado.Exito)
     {
-        return Results.BadRequest(new { mensaje = resultado.Mensaje });
+        return (IResult)Results.BadRequest(new { mensaje = resultado.Mensaje });
     }
 
     await hub.Clients.Group(partidaId).SendAsync("EstadoPartida", resultado.Partida);
