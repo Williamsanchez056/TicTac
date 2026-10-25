@@ -21,6 +21,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<PartidaService>();
+builder.Services.AddSingleton<PedidoService>();
 
 var app = builder.Build();
 
@@ -73,6 +74,22 @@ app.MapPost("/api/Partidas/{partidaId}/entrar", async (
         .SendAsync("EstadoPartida", resultado.Partida);
 
     return (IResult)Results.Ok(resultado.Partida);
+});
+
+// Demo del reto del taller: notificar cambios de estado de pedidos.
+app.MapPost("/api/Pedidos/{pedidoId}/estado", async (
+    string pedidoId,
+    PedidoEstadoRequest request,
+    PedidoService pedidos,
+    IHubContext<PartidaHub> hub) =>
+{
+    var resultado = pedidos.ActualizarEstado(pedidoId, request.Estado);
+
+    if (!resultado.Exito)
+        return (IResult)Results.BadRequest(new { mensaje = resultado.Mensaje });
+
+    await hub.Clients.All.SendAsync("PedidoActualizado", resultado.Notificacion);
+    return (IResult)Results.Ok(resultado.Notificacion);
 });
 
 app.MapHub<PartidaHub>("/partidaHub");
