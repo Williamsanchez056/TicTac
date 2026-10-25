@@ -74,3 +74,11 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
     .fila input { flex-basis: 100%; }
     .fila select { flex: 1; }
 }
+
+
+/* Formulario y enlaces de la demostracion de pedidos. */
+a { color: #1558a6; }
+a:hover { color: #0d3c75; }
+form label { display: block; font-size: 14px; margin-bottom: 8px; }
+#mensajePedido { min-height: 1.4em; color: #333; }
+#notificacionesPedidos li { padding: 6px 0; overflow-wrap: anywhere; }
