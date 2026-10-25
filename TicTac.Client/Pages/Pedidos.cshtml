@@ -1,0 +1,78 @@
+@page "/Pedidos"
+@{
+    Layout = null;
+    ViewData["Title"] = "Pedidos en tiempo real";
+}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>@ViewData["Title"]</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <main class="contenedor">
+    <header>
+      <p class="etiqueta">RETO DEL TALLER SIGNALR</p>
+      <h1>Pedidos en vivo</h1>
+      <p class="subtitulo">Los cambios de estado se muestran sin recargar la pagina.</p>
+      <p><a href="/">Volver al juego TicTacToe</a></p>
+    </header>
+
+    <section class="panel">
+      <h2>Actualizar un pedido</h2>
+      <form id="pedidoForm">
+        <label for="pedidoId">Codigo del pedido</label>
+        <div class="fila">
+          <input id="pedidoId" maxlength="40" value="pedido-001" required autocomplete="off">
+          <select id="estadoPedido" required>
+            <option value="En preparación">En preparación</option>
+            <option value="Enviado">Enviado</option>
+            <option value="Entregado">Entregado</option>
+          </select>
+          <button id="actualizarPedido" type="submit">Actualizar</button>
+        </div>
+      </form>
+      <p id="conexionPedidos" class="estado" role="status">Conectando con SignalR...</p>
+      <p id="mensajePedido" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Notificaciones recibidas</h2>
+      <p class="subtitulo">Abre esta pagina en dos pestañas para comprobar la difusion en tiempo real.</p>
+      <ol id="notificacionesPedidos" class="movimientos">
+        <li>Esperando cambios de estado...</li>
+      </ol>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const iniciarPagina = () => {
+        const script = document.createElement("script");
+        script.src = "/js/pedidos.js";
+        script.onerror = () => {
+          document.querySelector("#conexionPedidos").textContent =
+            "No se pudo cargar pedidos.js. Actualiza la pagina.";
+        };
+        document.body.appendChild(script);
+      };
+
+      const signalr = document.createElement("script");
+      signalr.src = "/js/signalr/dist/browser/signalr.min.js";
+      signalr.onload = iniciarPagina;
+      signalr.onerror = () => {
+        const cdn = document.createElement("script");
+        cdn.src = "https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js";
+        cdn.onload = iniciarPagina;
+        cdn.onerror = () => {
+          document.querySelector("#conexionPedidos").textContent =
+            "No se pudo cargar SignalR. Ejecuta libman restore y recarga la pagina.";
+        };
+        document.body.appendChild(cdn);
+      };
+      document.body.appendChild(signalr);
+    })();
+  </script>
+</body>
+</html>
